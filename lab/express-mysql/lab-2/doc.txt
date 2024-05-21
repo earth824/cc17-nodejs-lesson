@@ -1,0 +1,46 @@
+FEATURE AUTHENTICATION
+-- REGISTER
+POST /auth/register
+BODY
+  username          string required
+  password          string required at least 6 characters
+RESPONSE
+  201
+    message
+  400
+    message
+  500
+    message
+
+-- LOGIN
+POST /auth/login
+BODY
+  username          string required
+  password          string required
+RESPONSE
+  200
+    message
+  400
+    message
+  500
+    message
+
+-- CHANGE PASSWORD
+PATCH /auth/change-password
+
+
+FEATURE BILL
+-- CREATE BILL
+POST /bills
+
+-- UPDATE BILL
+PATCH /bills/:billId
+
+-- DELETE BILL
+DELETE /bills/:billId
+
+-- FIND BILL
+GET /bills
+
+-- FIND BILL BY BILL ID
+GET /bills/:billId

@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model acc_transaction {
+  TXN_ID              BigInt    @id @default(autoincrement())
+  AMOUNT              Float     @db.Float
+  FUNDS_AVAIL_DATE    DateTime  @db.DateTime(0)
+  TXN_DATE            DateTime  @db.DateTime(0)
+  TXN_TYPE_CD         String?   @db.VarChar(10)
+  ACCOUNT_ID          Int?
+  EXECUTION_BRANCH_ID Int?
+  TELLER_EMP_ID       Int?
+  account             account?  @relation(fields: [ACCOUNT_ID], references: [ACCOUNT_ID], onDelete: NoAction, onUpdate: NoAction, map: "ACC_TRANSACTION_ACCOUNT_FK")
+  branch              branch?   @relation(fields: [EXECUTION_BRANCH_ID], references: [BRANCH_ID], onDelete: NoAction, onUpdate: NoAction, map: "ACC_TRANSACTION_BRANCH_FK")
+  employee            employee? @relation(fields: [TELLER_EMP_ID], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction, map: "ACC_TRANSACTION_EMPLOYEE_FK")
+
+  @@index([ACCOUNT_ID], map: "ACC_TRANSACTION_ACCOUNT_FK")
+  @@index([EXECUTION_BRANCH_ID], map: "ACC_TRANSACTION_BRANCH_FK")
+  @@index([TELLER_EMP_ID], map: "ACC_TRANSACTION_EMPLOYEE_FK")
+}
+
+model account {
+  ACCOUNT_ID         Int               @id @default(autoincrement())
+  AVAIL_BALANCE      Float?            @db.Float
+  CLOSE_DATE         DateTime?         @db.Date
+  LAST_ACTIVITY_DATE DateTime?         @db.Date
+  OPEN_DATE          DateTime          @db.Date
+  PENDING_BALANCE    Float?            @db.Float
+  STATUS             String?           @db.VarChar(10)
+  CUST_ID            Int?
+  OPEN_BRANCH_ID     Int
+  OPEN_EMP_ID        Int
+  PRODUCT_CD         String            @db.VarChar(10)
+  acc_transaction    acc_transaction[]
+  branch             branch            @relation(fields: [OPEN_BRANCH_ID], references: [BRANCH_ID], onDelete: NoAction, onUpdate: NoAction, map: "ACCOUNT_BRANCH_FK")
+  customer           customer?         @relation(fields: [CUST_ID], references: [CUST_ID], onDelete: NoAction, onUpdate: NoAction, map: "ACCOUNT_CUSTOMER_FK")
+  employee           employee          @relation(fields: [OPEN_EMP_ID], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction, map: "ACCOUNT_EMPLOYEE_FK")
+  product            product           @relation(fields: [PRODUCT_CD], references: [PRODUCT_CD], onDelete: NoAction, onUpdate: NoAction, map: "ACCOUNT_PRODUCT_FK")
+
+  @@index([OPEN_BRANCH_ID], map: "ACCOUNT_BRANCH_FK")
+  @@index([CUST_ID], map: "ACCOUNT_CUSTOMER_FK")
+  @@index([OPEN_EMP_ID], map: "ACCOUNT_EMPLOYEE_FK")
+  @@index([PRODUCT_CD], map: "ACCOUNT_PRODUCT_FK")
+}
+
+model branch {
+  BRANCH_ID       Int               @id @default(autoincrement())
+  ADDRESS         String?           @db.VarChar(30)
+  CITY            String?           @db.VarChar(20)
+  NAME            String            @db.VarChar(20)
+  STATE           String?           @db.VarChar(10)
+  ZIP_CODE        String?           @db.VarChar(12)
+  acc_transaction acc_transaction[]
+  account         account[]
+  employee        employee[]
+}
+
+model business {
+  INCORP_DATE DateTime? @db.Date
+  NAME        String    @db.VarChar(255)
+  STATE_ID    String    @db.VarChar(10)
+  CUST_ID     Int       @id
+  customer    customer  @relation(fields: [CUST_ID], references: [CUST_ID], onDelete: NoAction, onUpdate: NoAction, map: "BUSINESS_EMPLOYEE_FK")
+}
+
+model customer {
+  CUST_ID      Int         @id @default(autoincrement())
+  ADDRESS      String?     @db.VarChar(30)
+  CITY         String?     @db.VarChar(20)
+  CUST_TYPE_CD String      @db.VarChar(1)
+  FED_ID       String      @db.VarChar(12)
+  POSTAL_CODE  String?     @db.VarChar(10)
+  STATE        String?     @db.VarChar(20)
+  account      account[]
+  business     business?
+  individual   individual?
+  officer      officer[]
+}
+
+model department {
+  DEPT_ID  Int        @id @default(autoincrement())
+  NAME     String     @db.VarChar(20)
+  employee employee[]
+}
+
+model employee {
+  EMP_ID             Int               @id @default(autoincrement())
+  END_DATE           DateTime?         @db.Date
+  FIRST_NAME         String            @db.VarChar(20)
+  LAST_NAME          String            @db.VarChar(20)
+  START_DATE         DateTime          @db.Date
+  TITLE              String?           @db.VarChar(20)
+  ASSIGNED_BRANCH_ID Int?
+  DEPT_ID            Int?
+  SUPERIOR_EMP_ID    Int?
+  acc_transaction    acc_transaction[]
+  account            account[]
+  branch             branch?           @relation(fields: [ASSIGNED_BRANCH_ID], references: [BRANCH_ID], onDelete: NoAction, onUpdate: NoAction, map: "EMPLOYEE_BRANCH_FK")
+  department         department?       @relation(fields: [DEPT_ID], references: [DEPT_ID], onDelete: NoAction, onUpdate: NoAction, map: "EMPLOYEE_DEPARTMENT_FK")
+  employee           employee?         @relation("employeeToemployee", fields: [SUPERIOR_EMP_ID], references: [EMP_ID], onDelete: NoAction, onUpdate: NoAction, map: "EMPLOYEE_EMPLOYEE_FK")
+  other_employee     employee[]        @relation("employeeToemployee")
+
+  @@index([ASSIGNED_BRANCH_ID], map: "EMPLOYEE_BRANCH_FK")
+  @@index([DEPT_ID], map: "EMPLOYEE_DEPARTMENT_FK")
+  @@index([SUPERIOR_EMP_ID], map: "EMPLOYEE_EMPLOYEE_FK")
+}
+
+model individual {
+  BIRTH_DATE DateTime? @db.Date
+  FIRST_NAME String    @db.VarChar(30)
+  LAST_NAME  String    @db.VarChar(30)
+  CUST_ID    Int       @id
+  customer   customer  @relation(fields: [CUST_ID], references: [CUST_ID], onDelete: NoAction, onUpdate: NoAction, map: "INDIVIDUAL_CUSTOMER_FK")
+}
+
+model officer {
+  OFFICER_ID Int       @id @default(autoincrement())
+  END_DATE   DateTime? @db.Date
+  FIRST_NAME String    @db.VarChar(30)
+  LAST_NAME  String    @db.VarChar(30)
+  START_DATE DateTime  @db.Date
+  TITLE      String?   @db.VarChar(20)
+  CUST_ID    Int?
+  customer   customer? @relation(fields: [CUST_ID], references: [CUST_ID], onDelete: NoAction, onUpdate: NoAction, map: "OFFICER_CUSTOMER_FK")
+
+  @@index([CUST_ID], map: "OFFICER_CUSTOMER_FK")
+}
+
+model product {
+  PRODUCT_CD      String        @id @db.VarChar(10)
+  DATE_OFFERED    DateTime?     @db.Date
+  DATE_RETIRED    DateTime?     @db.Date
+  NAME            String        @db.VarChar(50)
+  PRODUCT_TYPE_CD String?       @db.VarChar(255)
+  account         account[]
+  product_type    product_type? @relation(fields: [PRODUCT_TYPE_CD], references: [PRODUCT_TYPE_CD], onDelete: NoAction, onUpdate: NoAction, map: "PRODUCT_PRODUCT_TYPE_FK")
+
+  @@index([PRODUCT_TYPE_CD], map: "PRODUCT_PRODUCT_TYPE_FK")
+}
+
+model product_type {
+  PRODUCT_TYPE_CD String    @id @db.VarChar(255)
+  NAME            String?   @db.VarChar(50)
+  product         product[]
+}
