@@ -1,0 +1,6 @@
+-- CREATE CUSTOMER
+POST /customers
+REQUEST BODY name, address
+RESPONSE 200 {}
+400 {}
+500 {}
