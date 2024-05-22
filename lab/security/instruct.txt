@@ -1,0 +1,9 @@
+npm init -y
+npm i -D prisma
+npm i express
+
+CREATE DATABASE cc17_lab_security using workbench
+
+npx prisma init  ===> .env (DATABASE_URL="mysql://root:123456@localhost:3306/cc17_lab_security"), schema.prisma
+add user model to schema.prisma
+npx prisma db push (prisma automatic install @prisma/client and also run prisma generate)
